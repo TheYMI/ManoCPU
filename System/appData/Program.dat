@@ -1,0 +1,7 @@
+   LDA X
+   ADD Y
+   STA X
+   HLT
+X, DEC 5
+Y, DEC 2
+   END

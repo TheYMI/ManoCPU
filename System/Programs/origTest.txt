@@ -1,0 +1,9 @@
+   LDA X
+   INC
+   INC
+   STA X
+   STA Y
+   HLT
+X, DEC -2
+Y, DEC 0
+   END

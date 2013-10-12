@@ -1,0 +1,190 @@
+format{
+access_modes < [I] = "1", [] = "0" >
+
+// AND: opcode = 0
+	AND => <AM> opcode<3>(0) <TAG>
+
+// ADD: opcode = 1
+	ADD => <AM> opcode<3>(1) <TAG>
+
+// LDA: opcode = 2
+	LDA => <AM> opcode<3>(2) <TAG>
+
+// STA: opcode = 3
+	STA => <AM> opcode<3>(3) <TAG>
+
+// BUN: opcode = 4
+	BUN => <AM> opcode<3>(4) <TAG>
+
+// BSA: opcode = 5
+	BSA => <AM> opcode<3>(5) <TAG>
+
+// ISZ: opcode = 6
+	ISZ => <AM> opcode<3>(6) <TAG>
+
+// CLA: opcode = 7, I = 0
+	CLA => "7800"
+
+// CLE: opcode = 7, I = 0
+	CLE => "7400"
+
+// CMA: opcode = 7, I = 0
+	CMA => "7200"
+
+// CME: opcode = 7, I = 0
+	CME => "7100"
+
+// CIR: opcode = 7, I = 0
+	CIR => "7080"
+
+// CIL: opcode = 7, I = 0
+	CIL => "7040"
+
+// INC: opcode = 7, I = 0
+	INC => "7020"
+
+// SPA: opcode = 7, I = 0
+	SPA => "7010"
+
+// SNA: opcode = 7, I = 0
+	SNA => "7008"
+
+// SZA: opcode = 7, I = 0
+	SZA => "7004"
+
+// SZE: opcode = 7, I = 0
+	SZE => "7002"
+
+// HLT: opcode = 7, I = 0
+	HLT => "7001"
+
+// INP: opcode = 7, I = 1
+	INP => "F800"
+
+// OUT: opcode = 7, I = 1
+	OUT => "F400"
+
+// SKI: opcode = 7, I = 1
+	SKI => "F200"
+
+// SKO: opcode = 7, I = 1
+	SKO => "F100"
+
+// ION: opcode = 7, I = 1
+	ION => "F080"
+
+// IOF: opcode = 7, I = 1
+	IOF => "F040"
+}
+
+code
+{
+// Interrupts
+	T0(R): AR.clr, TR <- PC;
+	T1(R): M <- TR, PC.clr;
+	T2(R): PC.inc, IEN.clr, R.clr, end;
+
+	T3(IEN && (FGI.chn || FGO.chn)): R.set;
+	T4(IEN && (FGI.chn || FGO.chn)): R.set;
+	T5(IEN && (FGI.chn || FGO.chn)): R.set;
+	T6(IEN && (FGI.chn || FGO.chn)): R.set;
+	T7(IEN && (FGI.chn || FGO.chn)): R.set;
+	T8(IEN && (FGI.chn || FGO.chn)): R.set;
+	T9(IEN && (FGI.chn || FGO.chn)): R.set;
+	T10(IEN && (FGI.chn || FGO.chn)): R.set;
+	T11(IEN && (FGI.chn || FGO.chn)): R.set;
+	T12(IEN && (FGI.chn || FGO.chn)): R.set;
+	T13(IEN && (FGI.chn || FGO.chn)): R.set;
+	T14(IEN && (FGI.chn || FGO.chn)): R.set;
+	T15(IEN && (FGI.chn || FGO.chn)): R.set;
+	
+// Fetch
+	T0(!R): AR <- PC;
+	T1(!R): IR <- M, PC.inc;
+	T2(!R): opcode = #IR[12-14], AR <- IR[0-11], I <- IR[15];
+	T3(!(opcode(7)) && I): AR <- M;
+
+// Memory-Reference
+// AND: opcode = 0
+	T4(opcode(0)): DR <- M;
+	T5(opcode(0)): AC <- <ALU:AC `&` DR>, end;
+
+// ADD: opcode = 1
+	T4(opcode(1)): DR <- M;
+	T5(opcode(1)): AC <- <ALU:AC `+` DR>, end;
+
+// LDA: opcode = 2
+	T4(opcode(2)): DR <- M;
+	T5(opcode(2)): AC <- DR, end;
+
+// STA: opcode = 3
+	T4(opcode(3)): M <- AC, end;
+
+// BUN: opcode = 4
+	T4(opcode(4)): PC <- AR, end;
+
+// BSA: opcode = 5
+	T4(opcode(5)): M <- PC, AR.inc;
+	T5(opcode(5)): PC <- AR, end;
+
+// ISZ: opcode = 6
+	T4(opcode(6)): DR <- M;
+	T5(opcode(6)): DR.inc;
+	T6(opcode(6)): M <- DR, if(!DR) { PC.inc }, end;
+
+// Register-Reference
+// CLA: opcode = 7, I = 0
+	T3(opcode(7) && !I && IR[11]): AC.clr, end;
+
+// CLE: opcode = 7, I = 0
+	T3(opcode(7) && !I && IR[10]): E.clr, end;
+
+// CMA: opcode = 7, I = 0
+	T3(opcode(7) && !I && IR[9]): AC <- <ALU:1:`~`AC>, end;
+
+// CME: opcode = 7, I = 0
+	T3(opcode(7) && !I && IR[8]): E.cmp, end;
+
+// CIR: opcode = 7, I = 0
+	T3(opcode(7) && !I && IR[7]): <ALU:1:AC `>>(0)` 1>, AC[15] <- E, E <- AC[0], end;
+
+// CIL: opcode = 7, I = 0
+	T3(opcode(7) && !I && IR[6]): <ALU:1:AC `<<(0)` 1>, AC[0] <- E, E <- AC[15], end;
+
+// INC: opcode = 7, I = 0
+	T3(opcode(7) && !I && IR[5]): AC.inc, end;
+
+// SPA: opcode = 7, I = 0
+	T3(opcode(7) && !I && IR[4]): if(!AC[15] && AC[0-14]) { PC.inc }, end;
+
+// SNA: opcode = 7, I = 0
+	T3(opcode(7) && !I && IR[3]): if(AC[15]) { PC.inc }, end;
+
+// SZA: opcode = 7, I = 0
+	T3(opcode(7) && !I && IR[2]): if(!AC) { PC.inc }, end;
+
+// SZE: opcode = 7, I = 0
+	T3(opcode(7) && !I && IR[1]): if(!E) { PC.inc }, end;
+
+// HLT: opcode = 7, I = 0
+	T3(opcode(7) && !I && IR[0]): hlt;
+
+// Input-Output
+// INP: opcode = 7, I = 1
+	T3(opcode(7) && I && IR[11]): AC[0-7] <- INPR, FGI.clr, end;
+
+// OUT: opcode = 7, I = 1
+	T3(opcode(7) && I && IR[10]): OUTR <- AC[0-7], FGO.clr, end;
+
+// SKI: opcode = 7, I = 1
+	T3(opcode(7) && I && IR[9]): if(FGI) { PC.inc }, end;
+
+// SKO: opcode = 7, I = 1
+	T3(opcode(7) && I && IR[8]): if(FGO) { PC.inc }, end;
+
+// ION: opcode = 7, I = 1
+	T3(opcode(7) && I && IR[7]): IEN.set, end;
+
+// IOF: opcode = 7, I = 1
+	T3(opcode(7) && I && IR[6]): IEN.clr, end;
+}
